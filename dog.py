@@ -4,7 +4,7 @@ import os
 from loci.plugins import BF
 from ij.io import OpenDialog
 from ij import IJ, ImagePlus, ImageStack
-from ij.process import ImageConverter
+from ij.process import ImageConverter, AutoThresholder
 from ij3d import Image3DUniverse
 from javax.vecmath import Color3f, Point3f
 from script.imglib.analysis import DoGPeaks
@@ -40,7 +40,7 @@ LIMIT_SPHERE_PER_MESH=3495 #Limit of number of icospheres per Mesh
 #Diameter in microns
 cellDiameter=3.0
 # The minimum intensity for a peak to be considered
-minPeak=1000
+minPeak=0
 #Use point(1), icosphere(2), or icosphere but limited to the first 3495 points in X (3)
 plotType=USE_POINT
 # diameter Cell visualization
@@ -57,12 +57,17 @@ print "Image " + srcFile + " open successfully!"
 #Create the coordinate.txt file to ouput the point coordinate
 coordinateFile = open(srcDir + "coordinate.txt", "w")
 print "Created " +srcDir + "coordinate.txt"
+# If minPeak is set to 0, set it to automatically.
+if minPeak == 0:
+	minPeak = AutoThresholder().getThreshold("Percentile", imp.getStatistics().histogram); 
+
 #Get the pixel calibration
 cal=imp.getCalibration()
 #Set Gaussian Sigma parameters for the Difference of Gaussian
 sigmaLarge=[cellDiameter/cal.pixelWidth,cellDiameter/cal.pixelHeight,cellDiameter/cal.pixelDepth]
 sigmaSmall=[a/2 for a in sigmaLarge]
 print "Cell Diameter: XY-%f Z-%f in pixel" % (cellDiameter/cal.pixelWidth, cellDiameter/cal.pixelDepth)
+print "Minimum peak value: %f" % (minPeak)
 print "Sigma Large  : %f %f  %f in pixel" % (cellDiameter/cal.pixelWidth, cellDiameter/cal.pixelHeight,cellDiameter/cal.pixelDepth)
 print "Sigma Small  : %f %f  %f in pixel" % (cellDiameter/cal.pixelWidth/2, cellDiameter/cal.pixelHeight/2,cellDiameter/cal.pixelDepth/2)
 #peaks=DoGPeaks(Red(ImgLib.wrap(imp)),sigmaLarge,sigmaSmall,minPeak,1)
